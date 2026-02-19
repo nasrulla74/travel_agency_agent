@@ -68,9 +68,18 @@ echo ""
 echo -e "${BLUE}Step 4: Waiting for services to be healthy...${NC}"
 sleep 10
 
+# Check if postgres is healthy
+if docker ps | grep -q "travelagent-postgres"; then
+    echo -e "${GREEN}✓ PostgreSQL container is running${NC}"
+else
+    echo -e "${RED}✗ PostgreSQL container failed to start${NC}"
+    docker-compose -f ${COMPOSE_FILE} logs postgres
+    exit 1
+fi
+
 # Check if backend is healthy
 if docker ps | grep -q "travelagent-backend"; then
-    echo -e "${GREEN}✓ Backend container is running${NC}"
+    echo -e "${GREEN}✓ Backend container is running (port 8001)${NC}"
 else
     echo -e "${RED}✗ Backend container failed to start${NC}"
     docker-compose -f ${COMPOSE_FILE} logs backend
@@ -79,7 +88,7 @@ fi
 
 # Check if frontend is healthy
 if docker ps | grep -q "travelagent-frontend"; then
-    echo -e "${GREEN}✓ Frontend container is running${NC}"
+    echo -e "${GREEN}✓ Frontend container is running (port 3001)${NC}"
 else
     echo -e "${RED}✗ Frontend container failed to start${NC}"
     docker-compose -f ${COMPOSE_FILE} logs frontend
@@ -102,6 +111,11 @@ echo -e "${YELLOW}Useful commands:${NC}"
 echo "  View logs:        docker-compose -f ${COMPOSE_FILE} logs -f"
 echo "  Backend logs:     docker-compose -f ${COMPOSE_FILE} logs -f backend"
 echo "  Frontend logs:    docker-compose -f ${COMPOSE_FILE} logs -f frontend"
+echo "  Postgres logs:    docker-compose -f ${COMPOSE_FILE} logs -f postgres"
 echo "  Restart:          docker-compose -f ${COMPOSE_FILE} restart"
 echo "  Stop:             docker-compose -f ${COMPOSE_FILE} down"
+echo ""
+echo -e "${YELLOW}Ports:${NC}"
+echo "  Frontend: http://localhost:3001"
+echo "  Backend:  http://localhost:8001"
 echo ""

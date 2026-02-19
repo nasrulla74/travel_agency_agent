@@ -2,15 +2,17 @@ services:
   backend:
     image: ghcr.io/nasrulla74/travel_agency_agent-backend:latest
     container_name: travelagent-backend
-    volumes:
-      - db-data:/app/data
+    ports:
+      - "8001:8000"
     environment:
-      - DATABASE_URL=sqlite:///./travelmate.db
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/travelagent
       - SECRET_KEY=${SECRET_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     restart: unless-stopped
     networks:
-      - travelagent-network
+      - web-proxy
+    depends_on:
+      - postgres
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -21,6 +23,8 @@ services:
   frontend:
     image: ghcr.io/nasrulla74/travel_agency_agent-frontend:latest
     container_name: travelagent-frontend
+    ports:
+      - "3001:3000"
     environment:
       - NEXT_PUBLIC_API_URL=/api
     depends_on:
@@ -28,7 +32,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - travelagent-network
+      - web-proxy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 30s
@@ -36,11 +40,23 @@ services:
       retries: 3
       start_period: 40s
 
+  postgres:
+    image: postgres:15-alpine
+    container_name: travelagent-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=travelagent
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - web-proxy
+
 volumes:
-  db-data:
-    name: travelagent-db-data
+  postgres_data:
+    name: common_postgres_data
 
 networks:
-  travelagent-network:
-    name: travelagent-network
-    driver: bridge
+  web-proxy:
+    external: true
