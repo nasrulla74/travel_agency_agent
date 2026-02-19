@@ -55,7 +55,7 @@ services:
 
 volumes:
   postgres_data:
-    name: common_postgres_data
+    name: travelagent_postgres_data
 
 networks:
   web-proxy:
