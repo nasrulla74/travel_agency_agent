@@ -12,7 +12,8 @@ services:
     networks:
       - web-proxy
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -52,6 +53,12 @@ services:
     restart: unless-stopped
     networks:
       - web-proxy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d travelagent"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   postgres_data:
