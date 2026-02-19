@@ -40,7 +40,6 @@ jobs:
             type=sha,prefix=
             type=raw,value=latest,enable={{is_default_branch}}
 
-      # Build and push backend
       - name: Build and push backend
         uses: docker/build-push-action@v5
         with:
@@ -48,10 +47,8 @@ jobs:
           file: ./Dockerfile.backend
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          no-cache: true
 
-      # Build and push frontend
       - name: Build and push frontend
         uses: docker/build-push-action@v5
         with:
@@ -59,8 +56,7 @@ jobs:
           file: ./Dockerfile.frontend
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          no-cache: true
 
   deploy:
     needs: build-and-push
@@ -79,10 +75,6 @@ jobs:
             # Pull latest images
             docker pull ghcr.io/${{ github.repository }}-backend:latest
             docker pull ghcr.io/${{ github.repository }}-frontend:latest
-            
-            # Update docker-compose image references
-            sed -i 's|image: .*|image: ghcr.io/${{ github.repository }}-backend:latest|' docker-compose.yml
-            sed -i 's|image: .*|image: ghcr.io/${{ github.repository }}-frontend:latest|' docker-compose.yml
             
             # Restart services
             docker-compose down
